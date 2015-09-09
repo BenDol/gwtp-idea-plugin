@@ -1,7 +1,4 @@
 .DS_Store
-.idea
+.idea/copyright
+.idea/*.xml
 out/
-*.iml
-ideaIC*
-META-INF/
-target
