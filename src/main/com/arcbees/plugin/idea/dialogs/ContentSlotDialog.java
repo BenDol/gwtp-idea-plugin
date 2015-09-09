@@ -17,16 +17,15 @@
 package com.arcbees.plugin.idea.dialogs;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
-import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.search.searches.DefinitionsScopedSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -38,6 +37,7 @@ import java.util.Set;
 
 public class ContentSlotDialog extends DialogWrapper {
     // project
+    private final Module module;
     private final Project project;
     private final AnActionEvent sourceEvent;
 
@@ -49,10 +49,11 @@ public class ContentSlotDialog extends DialogWrapper {
     private String selection;
     private Map<String, PsiMember> slots;
 
-    public ContentSlotDialog(@Nullable Project project, boolean canBeParent, AnActionEvent sourceEvent) {
-        super(project, canBeParent);
+    public ContentSlotDialog(@NotNull Module module, boolean canBeParent, AnActionEvent sourceEvent) {
+        super(module.getProject(), canBeParent);
 
-        this.project = project;
+        this.module = module;
+        this.project = module.getProject();
         this.sourceEvent = sourceEvent;
 
         init();
@@ -107,10 +108,17 @@ public class ContentSlotDialog extends DialogWrapper {
         });
 
         ReferencesSearch.search(nestedSlotClass,
-            GlobalSearchScope.allScope(project), true).forEach(new Processor<PsiReference>() {
+            GlobalSearchScope.moduleScope(module), false).forEach(new Processor<PsiReference>() {
             public boolean process(PsiReference psiReference) {
-                Messages.showInfoMessage("DEBUG", psiReference.getClass().getName());
-                //slots.put(getSlot(psiElement), psiElement);
+                if(psiReference instanceof PsiQualifiedReferenceElement) {
+                    PsiElement parent = ((PsiQualifiedReferenceElement) psiReference).getParent();
+                    if(parent instanceof PsiNewExpression) {
+                        PsiElement field = parent.getParent();
+                        if(field instanceof PsiField) {
+                            slots.put(getSlot((PsiField)field), (PsiField)field);
+                        }
+                    }
+                }
                 return true;
             }
         });
