@@ -676,7 +676,8 @@ public class CreatePresenterAction extends AnAction {
         // get items from template
         List<String> fields = createdNameTokenTemplates.getFields();
         List<String> methods = createdNameTokenTemplates.getMethods();
-        final String fieldSource = fields.get(0).replaceAll("\n", "");
+        final String fieldSource = fields.get(0)
+            .replaceAll("\n", "").replace("/", "").replace("!", "");
         final String methodSource = methods.get(0);
 
         final PsiFieldModel psiFieldModel = new PsiFieldModel();
